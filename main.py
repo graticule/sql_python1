@@ -152,23 +152,29 @@ def find_client_id(*, first_name=None, surname=None, email=None, phone_number=No
         surname = '%'
     if email is None:
         email = '%'
-    main_query = """
-            SELECT c.client_id 
-              FROM clients c
-                   LEFT JOIN phone_numbers pn
-                   ON pn.client_id = c.client_id
-             WHERE c.first_name LIKE %(first_name)s
-               AND surname LIKE %(surname)s
-               AND email LIKE %(email)s"""
     with get_connection() as conn:
         with conn.cursor() as cur:
             if phone_number is None:
-                cur.execute(main_query+";", {'first_name': first_name,
-                  'surname': surname,
-                  'email': email})
+                query = """
+                    SELECT client_id 
+                      FROM clients
+                     WHERE first_name LIKE %(first_name)s
+                       AND surname LIKE %(surname)s
+                       AND email LIKE %(email)s;"""
+                cur.execute(query, {'first_name': first_name,
+                                    'surname': surname,
+                                    'email': email})
             else:
-                phone_query = "\nAND phone_number LIKE %(phone_number)s;"
-                cur.execute(main_query + phone_query,
+                query = """
+                    SELECT c.client_id 
+                      FROM clients c
+                           LEFT JOIN phone_numbers pn
+                           ON pn.client_id = c.client_id
+                     WHERE c.first_name LIKE %(first_name)s
+                       AND c.surname LIKE %(surname)s
+                       AND c.email LIKE %(email)s
+                       AND pn.phone_number LIKE %(phone_number)s;"""
+                cur.execute(query,
                             {'first_name': first_name,
                              'surname': surname,
                              'email': email,
