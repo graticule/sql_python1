@@ -26,12 +26,14 @@ import os
 from pprint import pprint
 
 import psycopg2
-from dotenv import load_dotenv
-from psycopg2 import sql as psysql
+import dotenv
+from psycopg2 import sql
 
+
+ENV_PATH = '.env'
 
 def get_connection():
-    return psycopg2.connect(database='client_db', user='postgres', password=os.environ.get('PASSWORD'))
+    return psycopg2.connect(database='client_db', user='postgres', password=dotenv.get_key(ENV_PATH, 'PASSWORD'))
 
 
 def print_db():
@@ -111,11 +113,11 @@ def change_client(client_id, *, first_name=None, surname=None, email=None):
         with conn.cursor() as cur:
             for k, value in params.items():
                 if value is not None:
-                    cur.execute(psysql.SQL("""
+                    cur.execute(sql.SQL("""
                         UPDATE clients 
                            SET {} = %s 
                          WHERE client_id = %s;
-                        """).format(psysql.Identifier(k)), (value, client_id))
+                        """).format(sql.Identifier(k)), (value, client_id))
             conn.commit()
 
 
@@ -185,8 +187,6 @@ def find_client_id(*, first_name=None, surname=None, email=None, phone_number=No
 
 
 if __name__ == "__main__":
-    load_dotenv('.env')
-
     create_tables()
 
     id = add_client('Michael', 'Scott', 'm.scott@gmail.com')
